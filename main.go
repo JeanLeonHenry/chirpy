@@ -11,10 +11,11 @@ type apiConfig struct {
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
-	// BUG: only one increment
-	cfg.fileserverHits++
-	log.Print(cfg)
-	return next
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cfg.fileserverHits++
+		log.Printf("Incremented fileServerHits to %v", cfg.fileserverHits)
+		next.ServeHTTP(w, r)
+	})
 }
 
 func (cfg *apiConfig) handlerMetrics(w http.ResponseWriter, r *http.Request) {
