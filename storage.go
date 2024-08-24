@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/JeanLeonHenry/chirpy/internal/database"
 )
@@ -24,19 +25,38 @@ func (cfg *apiConfig) handlerSaveChirp(w http.ResponseWriter, r *http.Request) {
 		err_msg := fmt.Sprint("Error creating chirp: ", err)
 		if err.Error() == database.ERR_CHIRP_TOO_LONG {
 			respondWithError(w, http.StatusBadRequest, err_msg)
+			return
 		}
 		respondWithError(w, http.StatusInternalServerError, err_msg)
 		return
 	}
 	respondWithJSON(w, http.StatusCreated, chirp)
 }
+
 func (cfg *apiConfig) handlerReadChirps(w http.ResponseWriter, r *http.Request) {
 	chirps, err := cfg.db.GetChirps()
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
 	}
+	respondWithJSON(w, http.StatusOK, chirps)
+}
+
+func (cfg *apiConfig) handlerReadChirpById(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(r.PathValue("chirpID"))
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	chirps, err := cfg.db.GetChirps()
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	}
-	respondWithJSON(w, http.StatusOK, chirps)
+	for _, c := range chirps {
+		if c.Id == id {
+			respondWithJSON(w, http.StatusOK, c)
+			return
+		}
+	}
+	respondWithError(w, http.StatusNotFound, "")
 }

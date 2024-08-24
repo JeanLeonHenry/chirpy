@@ -48,5 +48,6 @@ func main() {
 	mux.HandleFunc("/api/reset", cfg.handlerResetMetrics)
 	mux.HandleFunc("POST /api/chirps", cfg.handlerSaveChirp)
 	mux.HandleFunc("GET /api/chirps", cfg.handlerReadChirps)
+	mux.HandleFunc("GET /api/chirps/{chirpID}", cfg.handlerReadChirpById)
 	log.Fatal(server.ListenAndServe())
 }
