@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -59,4 +60,20 @@ func (cfg *apiConfig) handlerReadChirpById(w http.ResponseWriter, r *http.Reques
 		}
 	}
 	respondWithError(w, http.StatusNotFound, "")
+}
+
+func (cfg *apiConfig) handlerSaveUser(w http.ResponseWriter, r *http.Request) {
+	data, err := io.ReadAll(r.Body)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, fmt.Sprint("Error reading request body: ", err))
+		return
+	}
+	user, err := cfg.db.CreateUser(string(data))
+	log.Print("Saving user : ", user)
+	if err != nil {
+		err_msg := fmt.Sprint("Error creating user: ", err)
+		respondWithError(w, http.StatusInternalServerError, err_msg)
+		return
+	}
+	respondWithJSON(w, http.StatusCreated, user)
 }

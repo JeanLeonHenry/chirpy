@@ -2,8 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/JeanLeonHenry/chirpy/internal/database"
 )
@@ -37,6 +39,11 @@ func NewConfig(path string) apiConfig {
 }
 
 func main() {
+	dbg := flag.Bool("debug", false, "Enable debug mode")
+	flag.Parse()
+	if *dbg {
+		os.Remove("database.json")
+	}
 	mux := http.NewServeMux()
 	server := http.Server{Addr: ":8080", Handler: mux}
 	cfg := NewConfig("database.json")
@@ -49,5 +56,6 @@ func main() {
 	mux.HandleFunc("POST /api/chirps", cfg.handlerSaveChirp)
 	mux.HandleFunc("GET /api/chirps", cfg.handlerReadChirps)
 	mux.HandleFunc("GET /api/chirps/{chirpID}", cfg.handlerReadChirpById)
+	mux.HandleFunc("POST /api/users", cfg.handlerSaveUser)
 	log.Fatal(server.ListenAndServe())
 }

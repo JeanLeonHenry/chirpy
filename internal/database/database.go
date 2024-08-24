@@ -15,6 +15,10 @@ type Chirp struct {
 	Body string `json:"body"`
 	Id   int    `json:"id"`
 }
+type User struct {
+	Email string `json:"email"`
+	Id    int    `json:"id"`
+}
 
 type DB struct {
 	path string
@@ -23,6 +27,7 @@ type DB struct {
 
 type DBStructure struct {
 	Chirps map[int]Chirp `json:"chirps"`
+	Users  map[int]User  `json:"users"`
 }
 
 // NewDB creates a new database connection
@@ -65,6 +70,37 @@ func (db *DB) CreateChirp(body string) (Chirp, error) {
 		return Chirp{}, err
 	}
 	return dbStructure.Chirps[maxId+1], err
+}
+
+// CreateUser creates a new chirp and saves it to disk
+func (db *DB) CreateUser(body string) (User, error) {
+	user := new(User)
+	err := json.Unmarshal([]byte(body), user)
+	if err != nil {
+		return User{}, err
+	}
+	db.ensureDB()
+	dbStructure, err := db.loadDB()
+	if err != nil {
+		return User{}, err
+	}
+	log.Printf("loaded %v users", len(dbStructure.Users))
+	if dbStructure.Users == nil {
+		dbStructure.Users = make(map[int]User)
+	}
+	var maxId int
+	for k := range dbStructure.Users {
+		if k > maxId {
+			maxId = k
+		}
+	}
+	user.Id = maxId + 1
+	dbStructure.Users[maxId+1] = *user
+	err = db.writeDB(dbStructure)
+	if err != nil {
+		return User{}, err
+	}
+	return dbStructure.Users[maxId+1], err
 }
 
 // GetChirps returns all chirps in the database
